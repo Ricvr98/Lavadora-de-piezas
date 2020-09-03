@@ -1,15 +1,27 @@
 #include <LiquidCrystal.h>
+#include <DallasTemperature.h>
+#include <OneWire.h>
 const int pin_RS = 8; 
 const int pin_EN = 9; 
 const int pin_d4 = 4; 
 const int pin_d5 = 5; 
 const int pin_d6 = 6; 
 const int pin_d7 = 7; 
-const int pin_BL = 10;
+//const int pin_BL = 10;
+const int pin_temp = 10;
+const int pin_nivel_bajo = 11;
+const int pin_nivel_alto = 3;
+const int pin_bomba = 12;
+const int pin_res = 13;
 
-
+//inicializamos pines donde sera instalado el display
 LiquidCrystal lcd( pin_RS,  pin_EN,  pin_d4,  pin_d5,  pin_d6,  pin_d7);
 
+//inicializamos el sensor digital de temperatura ds18b20
+OneWire oneWireObjeto(pin_temp);
+DallasTemperature sensorDS18B20(&oneWireObjeto);
+// Variables con las direcciones únicas de los 4 sensores DS18B20
+DeviceAddress sensorTina_1  = {0x28 ,0xFF ,0x81 ,0xD4,0x63 ,0x15 ,0x02 ,0xAF};
 //Input & Button Logic
 const int numOfInputs = 1;
 const int inputPins[numOfInputs] = {0};
@@ -29,6 +41,12 @@ int estado = 1; //define el inicio del case en el void loop
 
 void setup() 
 {
+   pinMode(pin_bomba,OUTPUT);
+   digitalWrite(pin_bomba,HIGH);
+   pinMode(pin_res,OUTPUT);
+   digitalWrite(pin_res,HIGH);
+   pinMode(pin_nivel_bajo,INPUT);
+   pinMode(pin_nivel_alto,INPUT);
    Serial.begin(9600);
    lcd.begin(16, 2);
    lcd.setCursor(0,0);
@@ -138,7 +156,7 @@ void evaluate(){
     estado = 2;
   }
   else if( parameters[3] == 1){
-    estado = 4;
+    estado = 3;
   }
   else{
     estado = 1;
@@ -146,10 +164,91 @@ void evaluate(){
 }
 
 void calentar(){
+  int bajo = digitalRead(pin_nivel_bajo);
+  int alto = digitalRead(pin_nivel_alto);
+  int nivel = (alto + bajo);
+  int set = parameters[0];
+  int temp;
+
+  if(nivel == 1 && nivel == 0){
+    
+    do{
+      bajo = digitalRead(pin_nivel_bajo);
+      alto = digitalRead(pin_nivel_alto);
+      nivel = (alto + bajo);
+      lcd.clear();
+      lcd.setCursor(0,1);
+      lcd.print("Por favor llene");
+      lcd.setCursor(0,1);
+      lcd.print("la tina");
+      delay(5000);      
+    }
+    while(nivel=!2);
+  }
+  do
+  {
+    bajo = digitalRead(pin_nivel_bajo);
+    alto = digitalRead(pin_nivel_alto);
+    nivel = (alto + bajo);
+    sensorDS18B20.requestTemperatures();
+    temp = (sensorDS18B20.getTempC(sensorTina_1));
+    if(temp >= set){
+      return 0;
+    }
+    else{
+      digitalWrite(pin_res,LOW); 
+    }
+  }
+  while(nivel==2);
+  
   
 }
 void inyeccion(){
-  
+  int bajo = digitalRead(pin_nivel_bajo);
+  int alto = digitalRead(pin_nivel_alto);
+  int nivel = (alto + bajo);
+  long int tiempo_ciclo = ((parameters[1])*60*1000);
+  long int tiempo_inicial = millis();
+  long int tiempo_final = (tiempo_inicial + tiempo_ciclo);
+  long int tiempo_actual = millis();
+  int temp;
+  if(nivel == 1){
+  do{
+      bajo = digitalRead(pin_nivel_bajo);
+      alto = digitalRead(pin_nivel_alto);
+      nivel = (alto + bajo);
+      tiempo_actual = millis();
+      digitalWrite(pin_bomba,LOW);
+      sensorDS18B20.requestTemperatures();
+      temp = (sensorDS18B20.getTempC(sensorTina_1));
+      bajo = digitalRead(pin_nivel_bajo);
+      alto = digitalRead(pin_nivel_alto);
+      nivel = (alto + bajo);
+      digitalWrite(pin_bomba,LOW);
+  }
+  while(tiempo_actual < tiempo_final && nivel == 1);
+  }
+  if(nivel == 1){
+    
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Nivel de agua");
+    lcd.setCursor(0,2);
+    lcd.print("Insuficiente");
+    delay(5000);
+    estado = 2;
+    return 0;
+  }
+  if(tiempo_actual > tiempo_final){
+     lcd.clear();
+     lcd.setCursor(0,1);
+     lcd.print("Ciclo terminado");
+     delay(5000); 
+     estado = 0;
+     return 0;     
+  }
+  digitalWrite(pin_res,HIGH);
+  digitalWrite(pin_bomba,HIGH);
 }
 
 void printScreen() {

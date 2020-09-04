@@ -7,7 +7,6 @@ const int pin_d4 = 4;
 const int pin_d5 = 5; 
 const int pin_d6 = 6; 
 const int pin_d7 = 7; 
-//const int pin_BL = 10;
 const int pin_temp = 10;
 const int pin_nivel_bajo = 11;
 const int pin_nivel_alto = 3;
@@ -84,7 +83,7 @@ void loop()
     delay(5000);
     //lcd.clear();
     calentar();
-    
+    inyeccion();
                break;           
     case 3: //Manual
     lcd.clear();
@@ -164,26 +163,41 @@ void evaluate(){
 }
 
 void calentar(){
+  Serial.print("Calentar \n");
   int bajo = digitalRead(pin_nivel_bajo);
   int alto = digitalRead(pin_nivel_alto);
   int nivel = (alto + bajo);
   int set = parameters[0];
   int temp;
+  Serial.print(nivel);
+  Serial.print("\n");
 
-  if(nivel == 1 && nivel == 0){
+  if(nivel == 1 || nivel == 0){
     
     do{
       bajo = digitalRead(pin_nivel_bajo);
       alto = digitalRead(pin_nivel_alto);
       nivel = (alto + bajo);
       lcd.clear();
-      lcd.setCursor(0,1);
+      lcd.setCursor(0,0);
       lcd.print("Por favor llene");
-      lcd.setCursor(0,1);
-      lcd.print("la tina");
-      delay(5000);      
+      lcd.setCursor(0,2);
+      lcd.print("el tanque.");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Por favor llene");
+      lcd.setCursor(0,2);
+      lcd.print("el tanque..");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Por favor llene");
+      lcd.setCursor(0,2);
+      lcd.print("el tanque...");
+      delay(2000);                  
     }
-    while(nivel=!2);
+    while(nivel != 2);
   }
   do
   {
@@ -212,7 +226,7 @@ void inyeccion(){
   long int tiempo_final = (tiempo_inicial + tiempo_ciclo);
   long int tiempo_actual = millis();
   int temp;
-  if(nivel == 1){
+  if(nivel >= 1){
   do{
       bajo = digitalRead(pin_nivel_bajo);
       alto = digitalRead(pin_nivel_alto);
@@ -221,14 +235,10 @@ void inyeccion(){
       digitalWrite(pin_bomba,LOW);
       sensorDS18B20.requestTemperatures();
       temp = (sensorDS18B20.getTempC(sensorTina_1));
-      bajo = digitalRead(pin_nivel_bajo);
-      alto = digitalRead(pin_nivel_alto);
-      nivel = (alto + bajo);
-      digitalWrite(pin_bomba,LOW);
   }
   while(tiempo_actual < tiempo_final && nivel == 1);
   }
-  if(nivel == 1){
+  if(nivel < 1){
     
     lcd.clear();
     lcd.setCursor(0,0);
@@ -244,11 +254,11 @@ void inyeccion(){
      lcd.setCursor(0,1);
      lcd.print("Ciclo terminado");
      delay(5000); 
-     estado = 0;
-     return 0;     
+     estado = 0;    
   }
   digitalWrite(pin_res,HIGH);
   digitalWrite(pin_bomba,HIGH);
+  return 0;
 }
 
 void printScreen() {

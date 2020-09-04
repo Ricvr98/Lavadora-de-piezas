@@ -178,6 +178,8 @@ void calentar(){
       bajo = digitalRead(pin_nivel_bajo);
       alto = digitalRead(pin_nivel_alto);
       nivel = (alto + bajo);
+      Serial.print(nivel);
+      Serial.print("\n");
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Por favor llene");
@@ -235,7 +237,7 @@ void inyeccion(){
       digitalWrite(pin_bomba,LOW);
       sensorDS18B20.requestTemperatures();
       temp = (sensorDS18B20.getTempC(sensorTina_1));
-  }
+    }
   while(tiempo_actual < tiempo_final && nivel == 1);
   }
   if(nivel < 1){

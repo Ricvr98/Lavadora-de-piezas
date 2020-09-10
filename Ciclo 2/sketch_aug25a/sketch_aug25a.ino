@@ -1,6 +1,7 @@
 #include <LiquidCrystal.h>
 #include <DallasTemperature.h>
 #include <OneWire.h>
+//inicializacion de configuracion de pines de salida
 const int pin_RS = 8; 
 const int pin_EN = 9; 
 const int pin_d4 = 4; 
@@ -8,7 +9,7 @@ const int pin_d5 = 5;
 const int pin_d6 = 6; 
 const int pin_d7 = 7; 
 const int pin_temp = 10;
-const int pin_nivel_bajo = 11;
+const int pin_nivel_bajo = 2;
 const int pin_nivel_alto = 3;
 const int pin_bomba = 12;
 const int pin_res = 13;
@@ -172,34 +173,38 @@ void calentar(){
   Serial.print(nivel);
   Serial.print("\n");
 
-  if(nivel == 1 || nivel == 0){
+  if(nivel == 1 || nivel == 2){
     
     do{
-      bajo = digitalRead(pin_nivel_bajo);
-      alto = digitalRead(pin_nivel_alto);
-      nivel = (alto + bajo);
-      Serial.print(nivel);
-      Serial.print("\n");
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Por favor llene");
       lcd.setCursor(0,2);
       lcd.print("el tanque.");
-      delay(2000);
+      delay(1000);
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Por favor llene");
       lcd.setCursor(0,2);
       lcd.print("el tanque..");
-      delay(2000);
+      delay(1000);
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Por favor llene");
       lcd.setCursor(0,2);
       lcd.print("el tanque...");
-      delay(2000);                  
+      delay(1000);
+      bajo = digitalRead(pin_nivel_bajo);
+      alto = digitalRead(pin_nivel_alto);
+      nivel = (alto + bajo); 
+      Serial.print(bajo);
+      Serial.print("bajo\n");
+      Serial.print(alto);
+      Serial.print("alto\n");
+      Serial.print(nivel);
+      Serial.print("nivel\n");                 
     }
-    while(nivel != 2);
+    while(nivel != 0);
   }
   do
   {
@@ -208,6 +213,19 @@ void calentar(){
     nivel = (alto + bajo);
     sensorDS18B20.requestTemperatures();
     temp = (sensorDS18B20.getTempC(sensorTina_1));
+    Serial.print("calentando agua\n");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Calentando agua");
+    lcd.setCursor(0,2);
+    lcd.print(temp);
+    lcd.setCursor(3,2);
+    lcd.print("C");
+    lcd.setCursor(10,2);
+    lcd.print(set);
+    lcd.setCursor(16,2);
+    lcd.print("C");
+    delay(1000);
     if(temp >= set){
       return 0;
     }
@@ -215,7 +233,7 @@ void calentar(){
       digitalWrite(pin_res,LOW); 
     }
   }
-  while(nivel==2);
+  while(nivel==0);
   
   
 }
@@ -223,12 +241,13 @@ void inyeccion(){
   int bajo = digitalRead(pin_nivel_bajo);
   int alto = digitalRead(pin_nivel_alto);
   int nivel = (alto + bajo);
-  long int tiempo_ciclo = ((parameters[1])*60*1000);
+  long int tiempo_ciclo = (((parameters[1])*60000)-(4294967295));
   long int tiempo_inicial = millis();
   long int tiempo_final = (tiempo_inicial + tiempo_ciclo);
   long int tiempo_actual = millis();
   int temp;
-  if(nivel >= 1){
+  long int lcd_time;
+  if(nivel <= 1){
   do{
       bajo = digitalRead(pin_nivel_bajo);
       alto = digitalRead(pin_nivel_alto);
@@ -237,10 +256,22 @@ void inyeccion(){
       digitalWrite(pin_bomba,LOW);
       sensorDS18B20.requestTemperatures();
       temp = (sensorDS18B20.getTempC(sensorTina_1));
+      lcd_time = (tiempo_actual/60000);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Ciclo activo");
+      lcd.setCursor(0,2);
+      lcd.print(parameters[1]);
+      lcd.setCursor(3,2);
+      lcd.print("min");
+      lcd.setCursor(10,2);
+      lcd.print(lcd_time);
+      lcd.setCursor(14,2);
+      lcd.print("min");
     }
-  while(tiempo_actual < tiempo_final && nivel == 1);
+  while(tiempo_actual < tiempo_final && nivel <= 1);
   }
-  if(nivel < 1){
+  if(nivel > 1){
     
     lcd.clear();
     lcd.setCursor(0,0);
@@ -256,7 +287,7 @@ void inyeccion(){
      lcd.setCursor(0,1);
      lcd.print("Ciclo terminado");
      delay(5000); 
-     estado = 0;    
+     estado = 1;    
   }
   digitalWrite(pin_res,HIGH);
   digitalWrite(pin_bomba,HIGH);

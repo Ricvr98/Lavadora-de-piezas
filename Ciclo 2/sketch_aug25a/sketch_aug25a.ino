@@ -8,7 +8,7 @@ const int pin_d4 = 4;
 const int pin_d5 = 5; 
 const int pin_d6 = 6; 
 const int pin_d7 = 7; 
-const int pin_temp = 10;
+const int pin_temp = 11;
 const int pin_nivel_bajo = 2;
 const int pin_nivel_alto = 3;
 const int pin_bomba = 12;
@@ -219,11 +219,12 @@ void calentar(){
     lcd.print("Calentando agua");
     lcd.setCursor(0,2);
     lcd.print(temp);
+    Serial.println(temp);
     lcd.setCursor(3,2);
     lcd.print("C");
     lcd.setCursor(10,2);
     lcd.print(set);
-    lcd.setCursor(16,2);
+    lcd.setCursor(15,2);
     lcd.print("C");
     delay(1000);
     if(temp >= set){
@@ -287,6 +288,7 @@ void inyeccion(){
      lcd.setCursor(0,1);
      lcd.print("Ciclo terminado");
      delay(5000); 
+     parameters[2] = 0;
      estado = 1;    
   }
   digitalWrite(pin_res,HIGH);

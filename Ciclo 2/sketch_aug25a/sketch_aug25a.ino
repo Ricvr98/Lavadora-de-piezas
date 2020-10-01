@@ -234,7 +234,7 @@ void calentar(){
       digitalWrite(pin_res,LOW); 
     }
   }
-  while(nivel==0);
+  while(nivel <= 1);
   
   
 }
@@ -295,6 +295,85 @@ void inyeccion(){
   digitalWrite(pin_bomba,HIGH);
   return 0;
 }
+
+void manual(){
+  lcd.clear();
+  Serial.print("Manual \n");
+  lcd.clear();
+  int bajo = digitalRead(pin_nivel_bajo);
+  int alto = digitalRead(pin_nivel_alto);
+  int nivel = (alto + bajo);
+  int set = parameters[0];
+  int temp;
+  int b_estado = 0;
+  int r_estado = 0;
+  int b_boton = 0;
+  int r_boton =0;
+  digitalWrite(pin_res,HIGH);
+  digitalWrite(pin_bomba,HIGH);
+  int input;
+  sensorDS18B20.requestTemperatures();
+  temp = (sensorDS18B20.getTempC(sensorTina_1));
+  lcd.setCursor(10,2);
+  lcd.print(temp);
+  lcd.setCursor(15,2);
+  lcd.print("C");
+  if(nivel <= 1)
+  {
+    
+    do
+    {
+      if(input == 478) {
+        r_boton=0;
+      }
+      else if(input == 0) {
+        r_boton=1;
+      }
+      else if(input > 110 && input < 150)/*130*/ {
+        b_boton=1;
+      }
+      else if(input > 285 && input < 325)/*305*/ {
+        b_boton=0;
+        //////////////////////
+      }
+      if(r_boton != r_estado) {
+        r_estado = r_boton;
+        if(r_estado == 0)
+        {
+           lcd.setCursor(0,2);
+           lcd.print("R-off");
+           digitalWrite(pin_res,HIGH);
+        }
+        if(r_estado == 1)
+        {
+          lcd.setCursor(0,2);
+          lcd.print("R-on");
+          digitalWrite(pin_res,LOW);
+        }
+      }
+      else if(b_boton != b_estado)/*130*/ {
+        b_estado = b_boton;
+        if(b_estado == 0)
+        {
+           lcd.setCursor(0,0);
+           lcd.print("Bomba-off");
+           digitalWrite(pin_bomba,HIGH);
+        }
+        if(b_estado == 1)
+        {
+          lcd.setCursor(0,0);
+          lcd.print("Bomba-on");
+          digitalWrite(pin_bomba,LOW);
+        }
+      }
+    }
+    while(nivel <= 1);
+  }
+  else{
+    return 0;
+  }
+}  
+
 
 void printScreen() {
   lcd.clear();

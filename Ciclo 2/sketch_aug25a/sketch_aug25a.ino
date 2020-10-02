@@ -92,7 +92,8 @@ void loop()
     lcd.print("Ciclo manual");
     delay(5000);
     lcd.clear();
-    estado = 1;
+    manual();
+    //estado = 1;
                break;
   }
 }
@@ -323,6 +324,7 @@ void manual(){
     
     do
     {
+      input = analogRead(inputPins[0]);
       if(input == 478) {
         r_boton=0;
       }
@@ -347,7 +349,7 @@ void manual(){
         if(r_estado == 1)
         {
           lcd.setCursor(0,2);
-          lcd.print("R-on");
+          lcd.print("R-on ");
           digitalWrite(pin_res,LOW);
         }
       }
@@ -362,7 +364,7 @@ void manual(){
         if(b_estado == 1)
         {
           lcd.setCursor(0,0);
-          lcd.print("Bomba-on");
+          lcd.print("Bomba-on ");
           digitalWrite(pin_bomba,LOW);
         }
       }
@@ -370,6 +372,12 @@ void manual(){
     while(nivel <= 1);
   }
   else{
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Nivel de agua");
+    lcd.setCursor(0,2);
+    lcd.print("Insuficiente");
+    delay(5000);
     return 0;
   }
 }  
